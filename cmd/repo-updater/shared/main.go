@@ -170,6 +170,7 @@ func Main(enterpriseInit EnterpriseInit) {
 		Store:           store,
 		Scheduler:       scheduler,
 		GitserverClient: gitserver.DefaultClient,
+		SourcegraphDotComMode: envvar.SourcegraphDotComMode(),
 	}
 
 	rateLimitSyncer := repos.NewRateLimitSyncer(ratelimit.DefaultRegistry, store.ExternalServiceStore)
@@ -185,57 +186,6 @@ func Main(enterpriseInit EnterpriseInit) {
 	var debugDumpers []debugserver.Dumper
 	if enterpriseInit != nil {
 		debugDumpers = enterpriseInit(db, store, keyring.Default(), cf, server)
-	}
-
-	if envvar.SourcegraphDotComMode() {
-		server.SourcegraphDotComMode = true
-
-		es, err := store.ExternalServiceStore.List(ctx, database.ExternalServicesListOptions{
-			// On Cloud we only want to fetch site level external services here where the
-			// cloud_default flag has been set.
-			NoNamespace:      true,
-			OnlyCloudDefault: true,
-			Kinds: []string{
-				extsvc.KindGitHub,
-				extsvc.KindGitLab,
-				extsvc.KindJVMPackages,
-			},
-		})
-		if err != nil {
-			log.Fatalf("failed to list external services: %v", err)
-		}
-
-		for _, e := range es {
-			cfg, err := e.Configuration()
-			if err != nil {
-				log.Fatalf("bad external service config: %v", err)
-			}
-
-			switch c := cfg.(type) {
-			case *schema.GitHubConnection:
-				if strings.HasPrefix(c.Url, "https://github.com") && c.Token != "" {
-					server.GithubDotComSource, err = repos.NewGithubSource(e, cf)
-				}
-			case *schema.GitLabConnection:
-				if strings.HasPrefix(c.Url, "https://gitlab.com") && c.Token != "" {
-					server.GitLabDotComSource, err = repos.NewGitLabSource(e, cf)
-				}
-			case *schema.JVMPackagesConnection:
-				server.JVMPackagesSource, err = repos.NewJVMPackagesSource(e)
-			}
-
-			if err != nil {
-				log.Fatalf("failed to construct source: %v", err)
-			}
-		}
-
-		if server.GithubDotComSource == nil {
-			log.Fatalf("No github.com external service configured with a token")
-		}
-
-		if server.GitLabDotComSource == nil {
-			log.Fatalf("No gitlab.com external service configured with a token")
-		}
 	}
 
 	syncer := &repos.Syncer{
