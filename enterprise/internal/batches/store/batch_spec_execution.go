@@ -34,6 +34,7 @@ var BatchSpecExecutionColumns = []*sqlf.Query{
 	sqlf.Sprintf(`batch_spec_executions.user_id`),
 	sqlf.Sprintf(`batch_spec_executions.namespace_user_id`),
 	sqlf.Sprintf(`batch_spec_executions.namespace_org_id`),
+	sqlf.Sprintf(`batch_spec_executions.cancel`),
 }
 
 var batchSpecExecutionInsertColumns = []*sqlf.Query{
@@ -44,6 +45,7 @@ var batchSpecExecutionInsertColumns = []*sqlf.Query{
 	sqlf.Sprintf("namespace_org_id"),
 	sqlf.Sprintf("created_at"),
 	sqlf.Sprintf("updated_at"),
+	sqlf.Sprintf("cancel"),
 }
 
 // CreateBatchSpecExecution creates the given BatchSpecExecution.
@@ -66,7 +68,7 @@ func (s *Store) CreateBatchSpecExecution(ctx context.Context, b *btypes.BatchSpe
 var createBatchSpecExecutionQueryFmtstr = `
 -- source: enterprise/internal/batches/store/batch_spec_executions.go:CreateBatchSpecExecution
 INSERT INTO batch_spec_executions (%s)
-VALUES (%s, %s, %s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 RETURNING %s`
 
 func createBatchSpecExecutionQuery(c *btypes.BatchSpecExecution) (*sqlf.Query, error) {
@@ -87,8 +89,93 @@ func createBatchSpecExecutionQuery(c *btypes.BatchSpecExecution) (*sqlf.Query, e
 		nullInt32Column(c.NamespaceOrgID),
 		c.CreatedAt,
 		c.UpdatedAt,
+		c.Cancel,
 		sqlf.Join(BatchSpecExecutionColumns, ", "),
 	), nil
+}
+
+// UpdateBatchSpecExecution updates the given BatchSpecExecution.
+func (s *Store) UpdateBatchSpecExecution(ctx context.Context, b *btypes.BatchSpecExecution) error {
+	b.UpdatedAt = s.now()
+
+	q := updateBatchSpecExecutionQuery(b)
+	return s.query(ctx, q, func(sc scanner) error { return scanBatchSpecExecution(b, sc) })
+}
+
+var updateBatchSpecExecutionQueryFmtstr = `
+-- source: enterprise/internal/batches/store/batch_spec_executions.go:UpdateBatchSpecExecution
+UPDATE
+	batch_spec_executions
+SET
+	rand_id = %s,
+	batch_spec = %s,
+	user_id = %s,
+	namespace_user_id = %s,
+	namespace_org_id = %s,
+	created_at = %s,
+	updated_at = %s,
+	cancel = %s
+WHERE
+	id = %s
+RETURNING %s
+`
+
+func updateBatchSpecExecutionQuery(c *btypes.BatchSpecExecution) *sqlf.Query {
+	return sqlf.Sprintf(
+		updateBatchSpecExecutionQueryFmtstr,
+		c.RandID,
+		c.BatchSpec,
+		c.UserID,
+		nullInt32Column(c.NamespaceUserID),
+		nullInt32Column(c.NamespaceOrgID),
+		c.CreatedAt,
+		c.UpdatedAt,
+		c.Cancel,
+		c.ID,
+		sqlf.Join(BatchSpecExecutionColumns, ", "),
+	)
+}
+
+// CancelBatchSpecExecution cancels the given BatchSpecExecution.
+func (s *Store) CancelBatchSpecExecution(ctx context.Context, b *btypes.BatchSpecExecution) error {
+	b.UpdatedAt = s.now()
+
+	q := cancelBatchSpecExecutionQuery(b)
+	return s.query(ctx, q, func(sc scanner) error { return scanBatchSpecExecution(b, sc) })
+}
+
+var cancelBatchSpecExecutionQueryFmtstr = `
+-- source: enterprise/internal/batches/store/batch_spec_executions.go:CancelBatchSpecExecution
+UPDATE
+	batch_spec_executions
+SET
+	rand_id = %s,
+	batch_spec = %s,
+	user_id = %s,
+	namespace_user_id = %s,
+	namespace_org_id = %s,
+	created_at = %s,
+	updated_at = %s,
+	cancel = %s
+WHERE
+	id = %s
+RETURNING %s
+`
+
+func cancelBatchSpecExecutionQuery(c *btypes.BatchSpecExecution) *sqlf.Query {
+	return sqlf.Sprintf(
+		cancelBatchSpecExecutionQueryFmtstr,
+		c.RandID,
+		c.BatchSpec,
+		c.UserID,
+		nullInt32Column(c.NamespaceUserID),
+		nullInt32Column(c.NamespaceOrgID),
+		c.CreatedAt,
+		c.UpdatedAt,
+		c.Cancel,
+		c.ID,
+		sqlf.Join(BatchSpecExecutionColumns, ", "),
+	)
 }
 
 // GetBatchSpecExecutionOpts captures the query options needed for getting a BatchSpecExecution.
@@ -170,6 +257,7 @@ func scanBatchSpecExecution(b *btypes.BatchSpecExecution, sc scanner) error {
 		&b.UserID,
 		&dbutil.NullInt32{N: &b.NamespaceUserID},
 		&dbutil.NullInt32{N: &b.NamespaceOrgID},
+		&b.Cancel,
 	); err != nil {
 		return err
 	}
