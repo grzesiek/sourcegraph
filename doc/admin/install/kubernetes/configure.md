@@ -633,7 +633,6 @@ volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
 
-
 [Additional documentation](https://docs.microsoft.com/en-us/azure/aks/csi-storage-drivers).
 
 #### Kubernetes 1.17 and below
