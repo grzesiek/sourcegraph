@@ -35,7 +35,7 @@ const (
 
 type JVMPackagesSyncer struct {
 	Config  *schema.JVMPackagesConnection
-	DBStore repos.JVMPackagesRepoStore
+	dbStore repos.JVMPackagesRepoStore
 }
 
 var _ VCSSyncer = &JVMPackagesSyncer{}
@@ -177,7 +177,7 @@ func (s *JVMPackagesSyncer) packageDependencies(ctx context.Context, repoUrlPath
 		}
 	}
 
-	dbDeps, err := s.DBStore.GetJVMDependencyRepos(context.TODO())
+	dbDeps, err := s.dbStore.GetJVMDependencyRepos(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -195,9 +195,8 @@ func (s *JVMPackagesSyncer) packageDependencies(ctx context.Context, repoUrlPath
 				continue
 			}
 
-			if coursier.Exists(ctx, s.Config, dependency) {
-				dependencies = append(dependencies, dependency)
-			}
+			// we dont call coursier.Exists here
+			dependencies = append(dependencies, dependency)
 		}
 	}
 
