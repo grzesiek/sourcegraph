@@ -36,8 +36,9 @@ const AuthenticatedCreateCodeMonitorPage: React.FunctionComponent<CreateCodeMoni
     ])
 
     const createMonitorRequest = useCallback(
-        (codeMonitor: CodeMonitorFields): Observable<Partial<CodeMonitorFields>> =>
-            createCodeMonitor({
+        (codeMonitor: CodeMonitorFields): Observable<Partial<CodeMonitorFields>> => {
+            eventLogger.log('CreateCodeMonitorFormSubmitted')
+            return createCodeMonitor({
                 monitor: {
                     namespace: authenticatedUser.id,
                     description: codeMonitor.description,
@@ -53,7 +54,8 @@ const AuthenticatedCreateCodeMonitorPage: React.FunctionComponent<CreateCodeMoni
                         header: '',
                     },
                 })),
-            }),
+            })
+        },
         [authenticatedUser.id, createCodeMonitor]
     )
 
