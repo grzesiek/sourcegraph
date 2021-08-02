@@ -18,6 +18,8 @@ The Kubernetes manifests for a Sourcegraph on Kubernetes installation are in the
 
 > WARNING: You need to create a [fork of our deployment reference.](configure.md#fork-this-repository)
 
+<span class="virtual-br"></span>
+
 > WARNING: If you are deploying on Azure, you **must** ensure that your cluster is created with support for CSI storage drivers [(link)](https://docs.microsoft.com/en-us/azure/aks/csi-storage-drivers)). This **can not** be enabled after the fact.
 
 ## Steps
