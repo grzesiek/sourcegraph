@@ -36,6 +36,7 @@ const (
 	routeSearchBadge      = "search-badge"
 	routeRepo             = "repo"
 	routeRepoSettings     = "repo-settings"
+	routeCodeIntelligence = "code-intelligence"
 	routeRepoCommit       = "repo-commit"
 	routeRepoBranches     = "repo-branches"
 	routeRepoBatchChanges = "repo-batch-changes"
@@ -195,6 +196,7 @@ func newRouter() *mux.Router {
 
 	repo := r.PathPrefix(repoRevPath + "/" + routevar.RepoPathDelim).Subrouter()
 	repo.PathPrefix("/settings").Methods("GET").Name(routeRepoSettings)
+	repo.PathPrefix("/code-intelligence").Methods("GET").Name(routeCodeIntelligence)
 	repo.PathPrefix("/commit").Methods("GET").Name(routeRepoCommit)
 	repo.PathPrefix("/branches").Methods("GET").Name(routeRepoBranches)
 	repo.PathPrefix("/batch-changes").Methods("GET").Name(routeRepoBatchChanges)
@@ -244,6 +246,7 @@ func initRouter(db dbutil.DB, router *mux.Router) {
 	router.Get(uirouter.RoutePasswordReset).Handler(handler(serveBrandedPageString("Reset password", nil)))
 	router.Get(routeAPIConsole).Handler(handler(serveBrandedPageString("API console", nil)))
 	router.Get(routeRepoSettings).Handler(handler(serveBrandedPageString("Repository settings", nil)))
+	router.Get(routeCodeIntelligence).Handler(handler(serveBrandedPageString("Code intelligence", nil)))
 	router.Get(routeRepoCommit).Handler(handler(serveBrandedPageString("Commit", nil)))
 	router.Get(routeRepoBranches).Handler(handler(serveBrandedPageString("Branches", nil)))
 	router.Get(routeRepoBatchChanges).Handler(handler(serveBrandedPageString("Batch Changes", nil)))
