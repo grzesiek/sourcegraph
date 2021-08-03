@@ -36,7 +36,7 @@ const (
 	routeSearchBadge      = "search-badge"
 	routeRepo             = "repo"
 	routeRepoSettings     = "repo-settings"
-	routeCodeIntelligence = "code-intelligence"
+	routeRepoCodeIntelligence = "repo-code-intelligence"
 	routeRepoCommit       = "repo-commit"
 	routeRepoBranches     = "repo-branches"
 	routeRepoBatchChanges = "repo-batch-changes"
